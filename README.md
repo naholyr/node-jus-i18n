@@ -57,6 +57,43 @@ Plural forms
 
 This is the most important feature to come. Still in development though.
 
+Planned API (WiP)
+-----------------
+
+The base function will expect only the "plural form", and the associated number:
+
+    plural(msg, number)
+
+A "plural form" could be a simple string, or a complex structure.
+Here are some valid formats we could imagine:
+
+    // Simple string
+    "[0]No message|[1]One message|[2,+Inf)%count% messages"
+
+    // Complex structure
+    [
+      [ function(count){return count == 0;}, "No message" ],
+      [ function(count){return count == 1;}, "One message" ],
+      [ function(count){return count >= 2;}, "%count% messages" ],
+    ]
+
+Supporting both type of structures could ease support for complex rules like polish plurals (where we need to use euclidian divides). Eval() is an option too...
+
+As "plural()" is very simple, it's expected to work with "translate()". Example in a template:
+
+    <%= plural(_("You have %count% messages", {"%count%": 3}), 3) %>
+    // _("You have %count% messages") returns "[0]No message|[1]One message|[2,+Inf)%count% messages"
+    // _("...", {"%count%": 3}) therefore returns "[0]No message|[1]One message|[2,+Inf)3 messages"
+    // plural("[0]No message|[1]One message|[2,+Inf)3 messages", 3) returns "3 messages"
+
+We can detect some code duplication, so the best we could do is to make "plural()" handle param replacement itself:
+* "%count%" would be the default replacement
+* a third optional parameter would define this key if needed
+
+We'd rewrite previous example like this:
+
+    <%= plural(_("You have %count% messages"), 3) %>
+
 Configuration
 =============
 
