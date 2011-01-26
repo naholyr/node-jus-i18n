@@ -1,4 +1,4 @@
-var http = require('http');
+var http = require('http'), plural = require('./plural-form');
 
 exports.load = function load(catalogue, locales) {
 	if (locales instanceof Array) {
@@ -63,6 +63,7 @@ exports.localeSessKey = 'locale';
 exports.store = require('./store-module');
 exports.defaultLocale = 'en';
 exports.defaultCatalogue = 'messages';
+exports.defaultPluralReplace = '%n%';
 
 exports.translate = function translate(msg, params, locale, catalogue) {
 	if (typeof params == 'string') {
@@ -89,14 +90,38 @@ exports.translate = function translate(msg, params, locale, catalogue) {
 		translation = this.debugInfo.prefix + translation + this.debugInfo.suffix;
 	}
 	return translation;
-}
+};
 
-exports.plural = function plural(msg, number) {
-}
+exports.plural = function plural(msg, number, params, locale, catalogue) {
+	// Translate ?
+	if (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined') {
+		msg = this.translate(msg, params, locale, catalogue);
+	}
+	// "number" can be a number (we'll replace "%n%" in this case), or an object like '{"%count%": 33}'
+	var paramName = this.defaultPluralReplace;
+	if (typeof number == 'object') {
+		var foundKey = null;
+		for (var p in number) {
+			if (foundKey != null) {
+				throw new Error('If you pass an object to plural(), it must have only ONE property.');
+			}
+			foundKey = p;
+			number = number[p];
+		}
+		paramName = foundKey;
+	}
+	if (isNaN(number)) {
+		throw new Error('plural() expects 2nd parameter to be a number.');
+	}
+	// FIXME handle plural form
+	// msg = ...
+	// Replace in result
+	return msg.replace(paramName, number);
+};
 
 exports.dynamicHelpers = {
 	"_":       function(req) { return function(msg, params, locale, catalogue) { return req.i18n.translate(msg, params, locale || req.locale(), catalogue); }; },
-	"plural":  function(req) { return function(msg, number) { return req.i18n.plural(msg, number); }; },
+	"plural":  function(req) { return function(msg, number, params, locale, catalogue) { return req.i18n.plural(msg, number, params, locale, catalogue); }; },
 	"locale":  function(req) { return req.locale(); },
 	"locales": function(req) { return req.locales(); },
 };
