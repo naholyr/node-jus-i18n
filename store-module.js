@@ -1,7 +1,7 @@
 var data = {};
 
 var modules = exports.i18nDataModuleName = {
-	"__default__": process.cwd() + "/i18n-data",
+	"__default__": process.cwd() + "/i18n-data"
 };
 
 function addLocales(catalogue, messages) {

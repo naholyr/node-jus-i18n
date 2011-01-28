@@ -55,7 +55,7 @@ exports.configure = function configure(app, defaultLocale, loadedLocales, loaded
 	// Add "req.i18n.translate(...)" and "req.i18n.plural(...)"
 	http.IncomingMessage.prototype.i18n = {
 		"translate": this.translate,
-		"plural":    this.plural,
+		"plural":    this.plural
 	};
 };
 
@@ -94,6 +94,10 @@ exports.translate = function translate(msg, params, locale, catalogue) {
 };
 
 exports.plural = function plural(msg, number, params, locale, catalogue) {
+	// Debug mode ?
+	if (this.debugInfo) {
+		this.pluralHandler.debug = true;
+	}
 	// Translate ?
 	if (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined') {
 		msg = this.translate(msg, params, locale, catalogue);
@@ -114,7 +118,7 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 	if (isNaN(number)) {
 		throw new Error('plural() expects 2nd parameter to be a number.');
 	}
-	// FIXME handle plural form
+	// Handle plural form
 	msg = this.pluralHandler(msg, number);
 	// Replace in result
 	return msg.replace(paramName, number);
@@ -124,7 +128,7 @@ exports.dynamicHelpers = {
 	"_":       function(req) { return function(msg, params, locale, catalogue) { return req.i18n.translate(msg, params, locale || req.locale(), catalogue); }; },
 	"plural":  function(req) { return function(msg, number, params, locale, catalogue) { return req.i18n.plural(msg, number, params, locale, catalogue); }; },
 	"locale":  function(req) { return req.locale(); },
-	"locales": function(req) { return req.locales(); },
+	"locales": function(req) { return req.locales(); }
 };
 
 exports.debug = function debug(untranslatedPrefix, untranslatedSuffix) {
@@ -133,7 +137,7 @@ exports.debug = function debug(untranslatedPrefix, untranslatedSuffix) {
 	} else {
 		this.debugInfo = {
 			"prefix": untranslatedPrefix || "[T]",
-			"suffix": untranslatedSuffix || "[/T]",
+			"suffix": untranslatedSuffix || "[/T]"
 		};
 	}
 };
