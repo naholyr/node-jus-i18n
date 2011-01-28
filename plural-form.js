@@ -96,9 +96,7 @@ function extractPluralRuleCallbackRange(rule) {
 	};
 }
 
-// TODO Generate callback for an "expr" rule
+// Generate callback for an "expr" rule
 function extractPluralRuleCallbackExpr(rule) {
-	return function(n) {
-		throw new Error("Not Implemented Yet");
-	};
+	return eval('(function(n){return Boolean(' + rule + ');})');
 }
