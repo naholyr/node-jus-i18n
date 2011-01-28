@@ -1,4 +1,4 @@
-var http = require('http'), plural = require('./plural-form');
+var http = require('http');
 
 exports.load = function load(catalogue, locales) {
 	if (locales instanceof Array) {
@@ -61,6 +61,7 @@ exports.configure = function configure(app, defaultLocale, loadedLocales, loaded
 
 exports.localeSessKey = 'locale';
 exports.store = require('./store-module');
+exports.pluralHandler = require('./plural-form');
 exports.defaultLocale = 'en';
 exports.defaultCatalogue = 'messages';
 exports.defaultPluralReplace = '%n%';
@@ -114,7 +115,7 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 		throw new Error('plural() expects 2nd parameter to be a number.');
 	}
 	// FIXME handle plural form
-	// msg = ...
+	msg = this.pluralHandler(msg, number);
 	// Replace in result
 	return msg.replace(paramName, number);
 };
