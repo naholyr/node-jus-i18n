@@ -79,20 +79,22 @@ Here are some valid formats we could imagine:
 
 Supporting both type of structures could ease support for complex rules like polish plurals (where we need to use euclidian divides). Eval() is an option too...
 
-As "plural()" is very simple, it's expected to work with "translate()". Example in a template:
+About translating message passer to `plural()`, following behavior has to be discussed:
 
-    <%= plural(_("You have %count% messages", {"%count%": 3}), 3) %>
-    // _("You have %count% messages") returns "[0]No message|[1]One message|[2,+Inf)%count% messages"
-    // _("...", {"%count%": 3}) therefore returns "[0]No message|[1]One message|[2,+Inf)3 messages"
-    // plural("[0]No message|[1]One message|[2,+Inf)3 messages", 3) returns "3 messages"
+> "plural()" is able to automatically translate the message, BUT ONLY IF YOU EXPECT IT TO:
+> 
+> * plural(msg, number) → will not translate msg
+> * plural(msg, number, params, locale, catalogue) → will translate msg
+> 
+> If you want "plural()" to translate the message, but using default locale and no replacement, then call `plural(msg, number, {})`
+> 
+> Other option: always translate.
 
-We can detect some code duplication, so the best we could do is to make "plural()" handle param replacement itself:
-* "%count%" would be the default replacement
-* a third optional parameter would define this key if needed
+Example in a template:
 
-We'd rewrite previous example like this:
-
-    <%= plural(_("You have %count% messages"), 3) %>
+    <%= plural("You have %n% messages", 3, {}) %>
+    // _("You have %n% messages") returns "[0]No message|[1]One message|[2,+Inf)%n% messages"
+    // plural("[0]No message|[1]One message|[2,+Inf)%n% messages", 3) returns "3 messages"
 
 Configuration
 =============
