@@ -1,6 +1,7 @@
 
 // var plural = require('plural-form');
 // plural('[0]None|[1]One|[2-+Inf]More', 3); // 'More'
+// plural('[0]None|{n%2=1}Odd|{n%2=0}Even', 3); // 'Odd'
 module.exports = function pluralHandler(msg, number, throwError) {
 	var forms;
 	try {
@@ -72,29 +73,27 @@ function toNumber(s) {
 	}
 }
 function extractPluralRuleCallbackRange(rule) {
-	return (function(r) {
-		var ranges = [];
-		r.split(RE_RANGES_SEPARATOR).forEach(function(s) {
-			var match = RE_RANGE.exec(s);
-			if (!match) {
-				throw new Error("Invalid range: " + s);
+	var ranges = [];
+	r.split(RE_RANGES_SEPARATOR).forEach(function(s) {
+		var match = RE_RANGE.exec(s);
+		if (!match) {
+			throw new Error("Invalid range: " + s);
+		}
+		var min = toNumber(match[1]), max = match[2];
+		if (typeof max == 'undefined') {
+			ranges.push(min);
+		} else {
+			ranges.push([min, toNumber(max)]);
+		}
+	});
+	return function checkRange(n) {
+		for (var i=0; i<ranges.length; i++) {
+			if ((typeof ranges[i] == 'number' && n == ranges[i]) || (ranges[i][0] <= n && n <= ranges[i][1])) {
+				return true;
 			}
-			var min = toNumber(match[1]), max = match[2];
-			if (typeof max == 'undefined') {
-				ranges.push(min);
-			} else {
-				ranges.push([min, toNumber(max)]);
-			}
-		});
-		return function checkRange(n) {
-			for (var i=0; i<ranges.length; i++) {
-				if ((typeof ranges[i] == 'number' && n == ranges[i]) || (ranges[i][0] <= n && n <= ranges[i][1])) {
-					return true;
-				}
-			}
-			return false;
-		};
-	})(rule);
+		}
+		return false;
+	};
 }
 
 // TODO Generate callback for an "expr" rule
