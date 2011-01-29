@@ -74,6 +74,7 @@ function extractPluralForms(string) {
 	return (CACHE[string] = string.split(RE_PLURAL_SEPARATOR).map(extractPluralForm).map(function(plural) {
 		// Decode encoded escaped separator
 		plural.text = plural.text.replace(RE_ENCODED_SEPARATOR, DECODED_SEPARATOR);
+		return plural;
 	}));
 }
 // Accepts array [ruleCallback, message] or [message, ruleCallback] or {text:message, test:ruleCallback} or 'rule message'
@@ -123,7 +124,7 @@ function toNumber(s) {
 }
 function extractPluralRuleCallbackRange(rule) {
 	var ranges = [];
-	r.split(RE_RANGES_SEPARATOR).forEach(function(s) {
+	rule.split(RE_RANGES_SEPARATOR).forEach(function(s) {
 		var match = RE_RANGE.exec(s);
 		if (!match) {
 			throw new Error("Invalid range: " + s);
