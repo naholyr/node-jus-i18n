@@ -29,31 +29,61 @@ var RE_PLURAL_PART = /^\s*([\[\{])([^\[\]]+)([\]\}])(.*)\s*$/;
 var RE_PLURAL_SEPARATOR = /\|/g;
 // Escape '|' using '||'
 var RE_ESCAPED_SEPARATOR = /\|\|/g;
-var ENCODED_SEPARATOR = '||.';
-var RE_ENCODED_SEPARATOR = /\|\|\./g;
+var ENCODED_SEPARATOR = '$$$SEPARATOR$$$';
+var RE_ENCODED_SEPARATOR = /\$\$\$SEPARATOR\$\$\$/g;
 var DECODED_SEPARATOR = '|';
 // Cache calls to extractPluralForms()
 var CACHE = {};
 
 // Extract plural forms from a single string
+// Accepts array of plural forms, or a list of plural forms in a single string, separated by '|'
+// Returns {test: ruleCallback, text: ruleMessage}
 function extractPluralForms(string) {
+	// Allow array of plural forms
+	if (string instanceof Array) {
+		// Not detected a single plural form
+		return string.map(extractPluralForm);
+	}
+	// Assume we have a string
+	string = "" + string;
+	// Get from cache
 	if (typeof CACHE[string] != 'undefined') {
 		return CACHE[string];
 	}
-	string = string.replace(RE_ESCAPED_SEPARATOR, ENCODED_SEPARATOR);
-	var result = [];
-	string.split(RE_PLURAL_SEPARATOR).forEach(function(part) {
-		var match = RE_PLURAL_PART.exec(part);
-		if (!match || (match[1] == '[' && match[3] != ']') || (match[1] == '{' && match[3] != '}')) {
-			throw new Error("Invalid plural form: " + part);
+	// Calculate
+	string = string.replace(RE_ESCAPED_SEPARATOR, ENCODED_SEPARATOR); // Encode escaped separator
+	return (CACHE[string] = string.split(RE_PLURAL_SEPARATOR).map(extractPluralForm).map(function(plural) {
+		// Decode encoded escaped separator
+		plural.text = plural.text.replace(RE_ENCODED_SEPARATOR, DECODED_SEPARATOR);
+	}));
+}
+// Accepts array [ruleCallback, message] or [message, ruleCallback] or {text:message, test:ruleCallback} or 'rule message'
+// Returns formatted rule: {text:message, test:ruleCallback}
+function extractPluralForm(string) {
+	// Check format: Array
+	if (string instanceof Array) {
+		if (typeof string[0] == 'function') {
+			return {"text":string[1], "test":string[0]};
+		} else if (typeof string[1] == 'function') {
+			return {"text":string[0], "test":string[1]};
+		} else {
+			throw new Error("Invalid plural form as array");
 		}
-		result.push({
-			"test": (match[1] == '[' ? extractPluralRuleCallbackRange : extractPluralRuleCallbackExpr)(match[2]),
-			"text": match[4].replace(RE_ENCODED_SEPARATOR, DECODED_SEPARATOR)
-		});
-	});
-	CACHE[string] = result;
-	return result;
+	}
+	// Check format: direct object
+	if (typeof string == 'object' && typeof string.test == 'function' && typeof string.text == 'string') {
+		return string;
+	}
+	// Assume format: string
+	string = "" + string;
+	var match = RE_PLURAL_PART.exec(string);
+	if (!match || (match[1] == '[' && match[3] != ']') || (match[1] == '{' && match[3] != '}')) {
+		throw new Error("Invalid plural form: " + part);
+	}
+	return {
+		"test": (match[1] == '[' ? extractPluralRuleCallbackRange : extractPluralRuleCallbackExpr)(match[2]),
+		"text": match[4]
+	};
 }
 
 // Generate callback for a "range" rule
