@@ -1,10 +1,29 @@
 
 // var plural = require('plural-form');
 // plural('[0]None|[1]One|[2-+Inf]More', 3); // 'More'
-// plural('[0]None|{n%2=1}Odd|{n%2=0}Even', 3); // 'Odd'
-module.exports = function pluralHandler(msg, number, throwError) {
+// plural('[0]None|{n%2==1}Odd|{n%2==0}Even', 3); // 'Odd'
+// equivalents:
+// plural([
+//   {test:function(n){return n==0;},   text:"None"},
+//   {test:function(n){return n%2==1;}, text:"Odd"},
+//   {test:function(n){return n%2==0;}, text:"Even"}
+// ], 3);
+// plural([
+//   [function(n){return n==0;},   "None"],
+//   [function(n){return n%2==1;}, "Odd"],
+//   [function(n){return n%2==0;}, "Even"]
+// ], 3);
+// plural(function(n){
+//   if      (n == 0)   return "None";
+//   else if (n%2 == 1) return "Odd";
+//   else if (n%2 == 0) return "Even";
+// }, 3);
+module.exports = function pluralHandler(msg, n, throwError) {
 	var forms;
 	try {
+		if (typeof msg == 'function') {
+			return msg(n);
+		}
 		forms = extractPluralForms(msg);
 	} catch (e) {
 		if (exports.debug) {
@@ -16,7 +35,7 @@ module.exports = function pluralHandler(msg, number, throwError) {
 		return msg;
 	}
 	for (var i=0; i<forms.length; i++) {
-		if (forms[i].test(number)) {
+		if (forms[i].test(n)) {
 			return forms[i].text;
 		}
 	}
