@@ -34,14 +34,14 @@ exports.load = function load(catalogue, locales, i18n, callback) {
 			for (var locale in messages) {
 				loadedLocales.push(locale);
 			}
-			callback({}, loadedLocales, exports);
 		} catch (e) {
-			callback({'ALL':new Error('Cannot load catalogue')}, undefined, this);
+			return callback({'ALL':new Error('Cannot load catalogue')}, undefined, this);
 		}
+		return callback(undefined, loadedLocales, exports);
 	} else {
 		// Load specified locales
 		(function() {
-			var errors = {}, loadedLocales = [], nbDone = 0, nbLocales = locales.length;
+			var errors = undefined, loadedLocales = [], nbDone = 0, nbLocales = locales.length;
 			locales.forEach(function(locale) {
 				try {
 					var module = (modules[catalogue] || (modules.__default__ + "/" + catalogue)) + "/" + locale;
@@ -52,6 +52,9 @@ exports.load = function load(catalogue, locales, i18n, callback) {
 					addMessages(catalogue, locale, messages);
 					loadedLocales.push(locale);
 				} catch (e) {
+					if (!errors) {
+						errors = {};
+					}
 					errors[locale] = e;
 				}
 				nbDone++;
