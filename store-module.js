@@ -1,6 +1,6 @@
 var data = {};
 
-var modules = exports.i18nDataModuleName = {
+var modules = {
 	"__default__": process.cwd() + "/i18n-data"
 };
 
@@ -23,33 +23,65 @@ function addMessages(catalogue, locale, messages) {
 	}
 }
 
-exports.load = function load(catalogue, locale) {
-	var module = modules[catalogue] || (modules.__default__ + "/" + catalogue);
-	if (locale) {
-		module += "/" + locale;
-	}
-	try {
-		var messages = require(module);
-	} catch (err) {
-		console.warn(err.message);
-		return false;
-	}
-
-	if (!data[catalogue]) {
-		data[catalogue] = {};
-	}
-	if (!locale) {
-		addLocales(catalogue, messages);
+exports.load = function load(catalogue, locales, i18n, callback) {
+	if (typeof locales == 'undefined') {
+		this.locales(function(err, locales, store) {
+			if (typeof locales == 'undefined') {
+				callback({'ALL':new Error('Cannot load locales')}, undefined, store);
+			} else {
+				store.load(catalogue, locales, i18n, callback);
+			}
+		});
 	} else {
-		addMessages(catalogue, locale, messages);
+		var errors = {}, loadedLocales = [], nbDone = 0, nbLocales = locales.length;
+		locales.forEach(function(locale) {
+			try {
+				var module = (modules[catalogue] || (modules.__default__ + "/" + catalogue)) + "/" + locale;
+				var messages = require(module);
+				if (!data[catalogue]) {
+					data[catalogue] = {};
+				}
+				addMessages(catalogue, locale, messages);
+				loadedLocales.push(locale);
+			} catch (e) {
+				errors[locale] = e;
+			}
+			nbDone++;
+		});
+		function runWhenAllDone() {
+			if (nbDone < nbLocales) {
+				setTimeout(runWhenAllDone, 1);
+			} else {
+				callback(errors, loadedLocales, exports);
+			}
+		}
 	}
-	return true;
 };
 
-exports.getAll = function(locale, catalogue) {
+function getAll(locale, catalogue) {
 	return (data[catalogue] || {})[locale];
+}
+
+exports.get = function get(key, locale, catalogue) {
+	return (getAll(locale, catalogue) || {})[key];
 };
 
-exports.get = function(key, locale, catalogue) {
-	return (this.getAll(locale, catalogue) || {})[key];
+exports.configure = function configure(options, callback) {
+	if (typeof options != 'object') {
+		return callback(new Error('Invalid options'), this);
+	}
+	if (options.paths) {
+		for (var name in options.paths) {
+			modules[name] = options.paths[name];
+		}
+	}
+	return callback(err, this);
+};
+
+exports.locales = function locales(prefix, callback) {
+	if (typeof callback == 'undefined') {
+		callback = prefix;
+		prefix = '';
+	}
+	
 };
