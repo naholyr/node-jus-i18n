@@ -1,62 +1,76 @@
 var http = require('http');
 
-exports.load = function load(catalogue, locales) {
-	if (locales instanceof Array) {
-		for (var i=0; i<locales.length; i++) {
-			this.load(catalogue, locales[i]);
-		}
-	} else {
-		this.store.load(catalogue || this.defaultCatalogue, locales || null, this);
+function runCallback(err, callback) {
+	setTimeout(function() { callback(err, exports); }, 0);
+	return typeof err == 'undefined';
+}
+
+exports.load = function load(catalogue, locales, callback) {
+	if (typeof callback == 'undefined') {
+		callback = locales;
+		locales = undefined;
 	}
+	if (typeof callback == 'undefined') {
+		callback = catalogue;
+		catalogue = undefined;
+	}
+	this.store.load(catalogue || this.defaultCatalogue, locales || this.availableLocales, this, callback);
 };
 
-exports.configure = function configure(app, defaultLocale, loadedLocales, loadedCatalogue) {
-	if (!defaultLocale) {
-		defaultLocale = this.defaultLocale;
+exports.enableForApp = function enableForApp(app, options, callback) {
+	if (typeof options == 'undefined') {
+		options = {};
 	}
-
 	// Load i18n data
-	this.load(loadedCatalogue || this.defaultCatalogue, loadedLocales);
-
-	// Add helpers
-	app.dynamicHelpers(this.dynamicHelpers);
-
-	// Add "req.locales()"
-	http.IncomingMessage.prototype.locales = function() {
-		var accept = this.headers['accept-language'];
-		if (!accept) {
-			return [];
+	this.load(options.catalogue || this.defaultCatalogue, options.locales, function(err, i18n) {
+		if (err) {
+			return callback(err, i18n);
 		}
-		accept = accept.split(',');
-		var cultures = [];
-		for (var i=0; i<accept.length; i++) {
-			var pref = accept[i].split(';');
-			cultures.push({
-				"name": pref[0],
-				"q":    parseFloat((pref[1]||'q=1').substring(2))
-			});
-		}
-		cultures.sort(function(a,b) { return a.q>b.q ? -1 : (a.q<b.q ? +1 : 0); });
-		return cultures.map(function(c) { return c.name; });
-	};
 
-	// Add "req.locale([locale])" based on session
-	http.IncomingMessage.prototype.locale = function(newValue) {
-		var current = req.session[module.exports.localeSessKey];
-		if (typeof newValue != 'undefined') {
-			req.session[module.exports.localeSessKey] = newValue;
-		}
-		if (typeof current == 'undefined' && typeof defaultLocale != 'undefined') {
-			current = defaultLocale;
-		}
-		return current;
-	};
+		var defaultLocale = options.locale || i18n.defaultLocale;
 
-	// Add "req.i18n.translate(...)" and "req.i18n.plural(...)"
-	http.IncomingMessage.prototype.i18n = {
-		"translate": this.translate,
-		"plural":    this.plural
-	};
+		// Add helpers
+		app.dynamicHelpers(i18n.dynamicHelpers);
+
+		// Add "req.locales()"
+		http.IncomingMessage.prototype.locales = function() {
+			var accept = this.headers['accept-language'];
+			if (!accept) {
+				return [];
+			}
+			accept = accept.split(',');
+			var cultures = [];
+			for (var i=0; i<accept.length; i++) {
+				var pref = accept[i].split(';');
+				cultures.push({
+					"name": pref[0],
+					"q":    parseFloat((pref[1]||'q=1').substring(2))
+				});
+			}
+			cultures.sort(function(a,b) { return a.q>b.q ? -1 : (a.q<b.q ? +1 : 0); });
+			return cultures.map(function(c) { return c.name; });
+		};
+
+		// Add "req.locale([locale])" based on session
+		http.IncomingMessage.prototype.locale = function(newValue) {
+			var current = req.session[module.exports.localeSessKey];
+			if (typeof newValue != 'undefined') {
+				req.session[module.exports.localeSessKey] = newValue;
+			}
+			if (typeof current == 'undefined' && typeof defaultLocale != 'undefined') {
+				current = defaultLocale;
+			}
+			return current;
+		};
+
+		// Add "req.i18n.translate(...)" and "req.i18n.plural(...)"
+		http.IncomingMessage.prototype.i18n = {
+			"translate": this.translate,
+			"plural":    this.plural
+		};
+
+		return callback(undefined, i18n);
+	});
 };
 
 exports.localeSessKey = 'locale';
@@ -65,6 +79,30 @@ exports.pluralHandler = require('./plural-form');
 exports.defaultLocale = 'en';
 exports.defaultCatalogue = 'messages';
 exports.defaultPluralReplace = '%n%';
+exports.availableLocales = undefined; // any locale available in store
+
+exports.setStore = function(store, config, callback) {
+	try {
+		if (typeof store == 'string') {
+			this.store = require('./store-' + store);
+		} else if (typeof store != 'undefined') {
+			this.store = store;
+		}
+		if (typeof config != 'undefined') {
+			this.store.configure(config, callback);
+			return true;
+		}
+	} catch (e) {
+		if (typeof callback != 'undefined') {
+			callback(e, this);
+			return false;
+		} else {
+			throw e;
+		}
+	}
+	callback(undefined, this);
+	return true;
+};
 
 exports.translate = function translate(msg, params, locale, catalogue) {
 	if (typeof params == 'string') {

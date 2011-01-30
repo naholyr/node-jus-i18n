@@ -10,7 +10,16 @@ In any type of application:
     // Optional: add prefix and suffix around untranslated strings (default = '[T]' and '[/T]'
     i18n.debug();
     // Mandatory: load translation data
-    i18n.load(); // You can specify the only locales you want to load
+    i18n.load(
+      catalogue, // Catalogue to load, undefined if you want to load default catalogue
+      locales,   // array of locales to load, undefined if want to load all available locales
+      function(errors, loadedLocales, store) { // Callback
+        // errors = hash of exceptions thrown by each erroneous locale, or undefined if no error
+        //          any global error will be stored in errors.ALL
+        // loadedLocales = array of successfully loaded locales
+        // store = store module
+      }
+    );
     // Go translate :)
     console.log(i18n.translate('Chicken')); // "Poulet"
     console.log(i18n.translate('Chicken', 'it')); // "Pollo"
@@ -25,7 +34,13 @@ In Express.js:
     // Optional: configure default locale, debug mode, etc.
     // Then configure application:
     app.configure(function() {
-      i18n.configure(app);
+      i18n.enableForApp(app, { // options (all are optional, you can pass {} or undefined
+        "locale": "en",          // default locale
+        "catalogue": "messages", // catalogue to load
+        "locales": undefined,    // locales to load
+      }, function(err) { // called when i18n has loaded messages
+        ...
+      });
     });
     // Your "req" object is augmented:
     req.i18n.translate(...)
@@ -101,26 +116,45 @@ Configuration
 
 * Customize the session key to store user's locale:
      i18n.localeSessKey = 'locale';
-* Customize the store:
-     i18n.store = require('/path/to/my-store');
+* Customize the messages store:
+     // Embedded store
+     i18n.setStore('module', options, function(err, i18n) {
+       ...
+     });
+     // You custom store module
+     i18n.setStore(require('/path/to/my/store'), options, function(err, i18n) {
+       ...
+     });
+     // 
+  Beware you must call "i18n.load(...)" again if you had already loaded another store.
+  You can use only one store at a time.
 
 Write your own store
 --------------------
 
 You must write a module that will expose at least two self-explanatory methods:
-* load(catalogue, locale, i18n)
+* load(catalogue, locales, i18n, callback)
   * catalogue and i18n will always be provided by i18n module.
-  * if no locale is provided, you're expected to enable all locales.
+  * if no locale is provided, you're expected to enable all available locales.
+  * callback expects following parameters: (errors, loadedLocales, this)
 * get(key, locale, catalogue, i18n)
   * all parameters will always be provided by i18n module.
   * if no translation is found, you're expected to return null, false, or undefined.
+  * this function HAS TO BE synchronous.
+* locales(prefix, callback)
+  * callback expects following parameters: (err, array of locales starting with prefix, this)
+* catalogues(callback)
+  * callback expects following parameters: (err, array of available catalogues, this)
+* configure(options, callback)
+  * configure the store, options depend on your store
+  * callback expects following parameters: (err, this)
 
 The i18n module is passed to these methods whenever you would need it in your store.
 
-Stupid example (will always provide a translation for "js"):
+Stupid example (will always translate "js", and only this one, into "rox"):
 
     var data = {};
-    exports.load = function(catalogue, locale, i18n) {
+    exports.load = function(catalogue, locale, i18n, callback) {
       catalogue = catalogue || i18n.defaultCatalogue;
       locale = locale || i18n.defaultLocale;
       if (!data[catalogue]) {
@@ -131,17 +165,29 @@ Stupid example (will always provide a translation for "js"):
         } else {
           data[catalogue][locale]["js"] = "rox";
         }
+      }
+      // Make it asynchronous
+      setTimeout(function() { callback(undefined, i18n, exports); }, 1);
     }
     exports.get = function(key, locale, catalogue) {
       return data[catalogue][locale][key];
     }
+    exports.configure = function(options, callback) {
+      // This time, it's synchronous, your implementation, your choice
+      callback(undefined, i18n, this);
+    }
+      
 
 TODO
 ====
 
-* Plural forms
-* Fix the data loading when we specify the list of loaded locales
-* Provide more stores (at least Redis)
-* Better documentation
-* If provided a "file" store: Ability to merge data from more than one folder
-* All these things I didn't think about yet
+* Context like gender (original idea from dialect).
+* Fix the data loading when we specify the list of loaded locales.
+* Provide more stores (at least Redis).
+* Better documentation.
+* If provided a "file" store: Ability to merge data from more than one folder.
+* Ability to use more than one store at same time.
+* Better support for locales "lang_COUNTRY" (loads messages for locales "lang" and "lang-country")
+* All these things I didn't think about yet.
+
+* DONE <del>Plural forms, including ranges and expressions recognition</del>
