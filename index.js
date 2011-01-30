@@ -74,7 +74,7 @@ exports.enableForApp = function enableForApp(app, options, callback) {
 };
 
 exports.localeSessKey = 'locale';
-exports.store = require('./store-module');
+exports.store = require('./stores/module');
 exports.pluralHandler = require('./plural-form');
 exports.defaultLocale = 'en';
 exports.defaultCatalogue = 'messages';
@@ -84,7 +84,7 @@ exports.availableLocales = undefined; // any locale available in store
 exports.setStore = function(store, config, callback) {
 	try {
 		if (typeof store == 'string') {
-			this.store = require('./store-' + store);
+			this.store = require('./stores/' + store);
 		} else if (typeof store != 'undefined') {
 			this.store = store;
 		}
