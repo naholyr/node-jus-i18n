@@ -78,7 +78,8 @@ exports.store = require('./stores/module');
 exports.pluralHandler = require('./plural-form');
 exports.defaultLocale = 'en';
 exports.defaultCatalogue = 'messages';
-exports.defaultPluralReplace = '%n%';
+exports.replaceFormat = '{...}';
+exports.defaultPluralReplace = 'n';
 exports.availableLocales = undefined; // any locale available in store
 
 exports.setStore = function(store, config, callback) {
@@ -104,6 +105,15 @@ exports.setStore = function(store, config, callback) {
 	return true;
 };
 
+function replaceParams(string, replacements) {
+	if (typeof replacements == 'object') {
+		for (var key in replacements) {
+			string = string.replace(exports.replaceFormat.replace("...", key), replacements[key]);
+		}
+	}
+	return string;
+}
+
 exports.translate = function translate(msg, params, locale, catalogue) {
 	if (typeof params == 'string') {
 		if (typeof locale != 'undefined') {
@@ -113,17 +123,21 @@ exports.translate = function translate(msg, params, locale, catalogue) {
 		params = undefined;
 	}
 	// Find translation
-	var translation = this.store.get(msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
-	var translated = typeof translation != 'undefined';
-	if (!translated) {
+	var translation;
+	// Search with context
+	if (typeof params.context != 'undefined') {
+		translation = this.store.get(params.context+":"+msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
+	}
+	// No context, or no translation for this context, search with no context
+	if (typeof translation == 'undefined') {
+		var translation = this.store.get(msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
+	}
+	// No translation found, just keep original message
+	if (typeof translation == 'undefined') {
 		translation = msg;
 	}
 	// Apply parameters
-	if (typeof params == 'object') {
-		for (var replace in params) {
-			translation = translation.replace(replace, params[replace]);
-		}
-	}
+	translation = replaceParams(translation, params);
 	// Debug ?
 	if (!translated && this.debugInfo) {
 		translation = this.debugInfo.prefix + translation + this.debugInfo.suffix;
@@ -140,7 +154,7 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 	if (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined') {
 		msg = this.translate(msg, params, locale, catalogue);
 	}
-	// "number" can be a number (we'll replace "%n%" in this case), or an object like '{"%count%": 33}'
+	// "number" can be a number (we'll replace "n" in this case), or an object like '{"count": 33}'
 	var paramName = this.defaultPluralReplace;
 	if (typeof number == 'object') {
 		var foundKey = null;
@@ -159,7 +173,9 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 	// Handle plural form
 	msg = this.pluralHandler(msg, number);
 	// Replace in result
-	return msg.replace(paramName, number);
+	var replacements = {};
+	replacements[paramName] = String(number);
+	return replaceParams(msg, replacements);
 };
 
 exports.dynamicHelpers = {
