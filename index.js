@@ -125,15 +125,16 @@ exports.translate = function translate(msg, params, locale, catalogue) {
 	// Find translation
 	var translation;
 	// Search with context
-	if (typeof params.context != 'undefined') {
+	if (params && typeof params.context != 'undefined') {
 		translation = this.store.get(params.context+":"+msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
 	}
 	// No context, or no translation for this context, search with no context
 	if (typeof translation == 'undefined') {
 		var translation = this.store.get(msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
 	}
+	var translated = typeof translation != 'undefined';
 	// No translation found, just keep original message
-	if (typeof translation == 'undefined') {
+	if (!translated) {
 		translation = msg;
 	}
 	// Apply parameters
