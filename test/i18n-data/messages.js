@@ -1,9 +1,12 @@
 exports.fr = {
-	'guy': 'mec',
-	'You have %n% messages': "[0]Vous n'avez aucun message|[1]Vous avez un message|[2-+Inf]Vous avez %n% messages"
+	'x': 'x (en français)',
+	'You have {n} messages': "[0]Vous n'avez aucun message|[1]Vous avez un message|[2-+Inf]Vous avez {n} messages",
+	'Hello, {name}': "Bonjour, {name}",
+	'female:Hello, {name}': "Bonjour, mademoiselle {name}",
+	'male:Hello, {name}': "Bonjour, monsieur {name}"
 };
 
 exports.en = {
-	'guy': 'some guy'
+	'x': 'x (in English)'
 };
 
