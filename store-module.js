@@ -25,36 +25,46 @@ function addMessages(catalogue, locale, messages) {
 
 exports.load = function load(catalogue, locales, i18n, callback) {
 	if (typeof locales == 'undefined') {
-		this.locales(function(err, locales, store) {
-			if (typeof locales == 'undefined') {
-				callback({'ALL':new Error('Cannot load locales')}, undefined, store);
-			} else {
-				store.load(catalogue, locales, i18n, callback);
-			}
-		});
-	} else {
-		var errors = {}, loadedLocales = [], nbDone = 0, nbLocales = locales.length;
-		locales.forEach(function(locale) {
-			try {
-				var module = (modules[catalogue] || (modules.__default__ + "/" + catalogue)) + "/" + locale;
-				var messages = require(module);
-				if (!data[catalogue]) {
-					data[catalogue] = {};
-				}
-				addMessages(catalogue, locale, messages);
+		// No locales: load by catalogue
+		try {
+			var module = modules[catalogue] || (modules.__default__ + "/" + catalogue);
+			var messages = require(module);
+			addLocales(catalogue, messages);
+			var loadedLocales = [];
+			for (var locale in messages) {
 				loadedLocales.push(locale);
-			} catch (e) {
-				errors[locale] = e;
 			}
-			nbDone++;
-		});
-		function runWhenAllDone() {
-			if (nbDone < nbLocales) {
-				setTimeout(runWhenAllDone, 1);
-			} else {
-				callback(errors, loadedLocales, exports);
-			}
+			callback({}, loadedLocales, exports);
+		} catch (e) {
+			callback({'ALL':new Error('Cannot load catalogue')}, undefined, this);
 		}
+	} else {
+		// Load specified locales
+		(function() {
+			var errors = {}, loadedLocales = [], nbDone = 0, nbLocales = locales.length;
+			locales.forEach(function(locale) {
+				try {
+					var module = (modules[catalogue] || (modules.__default__ + "/" + catalogue)) + "/" + locale;
+					var messages = require(module);
+					if (!data[catalogue]) {
+						data[catalogue] = {};
+					}
+					addMessages(catalogue, locale, messages);
+					loadedLocales.push(locale);
+				} catch (e) {
+					errors[locale] = e;
+				}
+				nbDone++;
+			});
+			function runWhenAllDone() {
+				if (nbDone < nbLocales) {
+					setTimeout(runWhenAllDone, 1);
+				} else {
+					callback(errors, loadedLocales, exports);
+				}
+			}
+			runWhenAllDone();
+		})();
 	}
 };
 
@@ -78,10 +88,10 @@ exports.configure = function configure(options, callback) {
 	return callback(err, this);
 };
 
-exports.locales = function locales(prefix, callback) {
-	if (typeof callback == 'undefined') {
-		callback = prefix;
-		prefix = '';
-	}
-	
+exports.locales = function locales(prefix, catalogue, callback) {
+	callback(new Error('Not implemented'), undefined, this);
+};
+
+exports.catalogues = function catalogues(callback) {
+	callback(new Error('Not implemented'), undefined, this);
 };

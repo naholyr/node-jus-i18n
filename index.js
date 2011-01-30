@@ -6,6 +6,14 @@ function runCallback(err, callback) {
 }
 
 exports.load = function load(catalogue, locales, callback) {
+	if (typeof callback == 'undefined') {
+		callback = locales;
+		locales = undefined;
+	}
+	if (typeof callback == 'undefined') {
+		callback = catalogue;
+		catalogue = undefined;
+	}
 	this.store.load(catalogue || this.defaultCatalogue, locales || this.availableLocales, this, callback);
 };
 

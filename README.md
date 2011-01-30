@@ -143,6 +143,8 @@ You must write a module that will expose at least two self-explanatory methods:
   * this function HAS TO BE synchronous.
 * locales(prefix, callback)
   * callback expects following parameters: (err, array of locales starting with prefix, this)
+* catalogues(callback)
+  * callback expects following parameters: (err, array of available catalogues, this)
 * configure(options, callback)
   * configure the store, options depend on your store
   * callback expects following parameters: (err, this)
@@ -185,6 +187,7 @@ TODO
 * Better documentation.
 * If provided a "file" store: Ability to merge data from more than one folder.
 * Ability to use more than one store at same time.
+* Better support for locales "lang_COUNTRY" (loads messages for locales "lang" and "lang-country")
 * All these things I didn't think about yet.
 
 * DONE <del>Plural forms, including ranges and expressions recognition</del>
