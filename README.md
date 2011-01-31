@@ -98,10 +98,98 @@ The best way to store your messages using module storage, to keep full compatibi
     module.exports = { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" };
 	// i18n.load('messages') and i18n.load('messages', ['fr', 'it']) will both work
 
+In this storage engine, methods to list available locales will not respond.
+
+### Formats, contexts and plural forms
+
+Default format:
+
+    "sentence": "Translated sentence",
+
+Context embedded in the message:
+
+    "sentence": "Translated sentence for default context or no context",
+    "context1:sentence": "Translation for context1",
+    "context2:sentence": "Translation for context2",
+    ...
+
+Using callback:
+
+    "sentence": function(context) {
+      switch (context) {
+        ...
+        default:
+          return "Default translation";
+      }
+    }
+
+Using hash:
+
+    "sentence": {
+      "": "Default translation",
+      "context1": "Translation for context1",
+      "context2": "Translation for context2",
+      ...
+    }
+
+Of course, a "translation" can be a simple string as any representation of a plural form (string, array, hash).
+
+Mixing plural forms and contexts can be confusing, the best practice is not to use numbers as context. 
+
 Store: file
 -----------
 
+*Not Implemented Yet*
 
+Filename: i18n-data/messages.{lang}[.txt]
+
+You can specify several folders, translations will then be merged, in the same order the folders have been declared (last one overrides previous).
+
+Format:
+
+    sentence = translation
+
+* Surrounding quotes (single or double) can be used, they'll be stripped out.
+
+    sentence = "translation"
+    sentence = 'translation'
+
+* Escape using backslash.
+
+    sentence = "my \"translation\""
+
+* Same rules apply to keys, if you need to use a "=" in a key, quote it or escape the sign
+
+    "my \= sentence" = "my = translation"
+
+### Plural forms
+
+Default format:
+
+    You have {n} messages = [0]Vous n'avez aucun message|[1]Vous avez un message|[2-+Inf]Vous avez {n} messages
+
+Multiline format (use a single pipe, then one plural form per line, indented by one or more spaces/tabs):
+
+    You have {n} messages = |
+    	[0]Vous n'avez aucun message
+    	[1]Vous avez un message
+    	[2-+Inf]Vous avez {n} messages
+
+### Contexts
+
+Default format:
+
+    Hello, {name} = Bonjour, {name}
+    female:Hello, {name} = Bonjour, mademoiselle {name}
+    male:Hello, {name} = Bonjour, monsieur {name}
+
+Multiline format (define default translation, then one translation per context, using colon):
+
+    Hello, {name} = Bonjour, {name}
+    	female: Bonjour, mademoiselle {name}
+    	male: Bonjour, monsieur {name}
+
+If you need to use a single pipe as default translation, this will trigger plural forms (and then a syntax error) unless you quote it or escape it. 
 
 Store: db
 ---------
