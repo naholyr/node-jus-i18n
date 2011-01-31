@@ -198,7 +198,7 @@ exports.debug = function debug(untranslatedPrefix, untranslatedSuffix) {
 		delete this.debugInfo;
 	} else {
 		this.debugInfo = {
-			"prefix": untranslatedPrefix || "[T]",
+			"prefix": (untranslatedPrefix == true ? undefined : untranslatedPrefix) || "[T]",
 			"suffix": untranslatedSuffix || "[/T]"
 		};
 	}
