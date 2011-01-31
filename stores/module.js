@@ -88,7 +88,7 @@ exports.configure = function configure(options, callback) {
 			modules[name] = options.paths[name];
 		}
 	}
-	return callback(err, this);
+	return callback(undefined, this);
 };
 
 exports.locales = function locales(prefix, catalogue, callback) {

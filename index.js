@@ -1,7 +1,13 @@
 var http = require('http');
 
+function defaultCallback(err) {
+	if (err) {
+		throw err;
+	}
+}
+
 function runCallback(err, callback) {
-	setTimeout(function() { callback(err, exports); }, 0);
+	setTimeout(function() { (callback || defaultCallback)(err, exports); }, 0);
 	return typeof err == 'undefined';
 }
 
@@ -90,19 +96,12 @@ exports.setStore = function(store, config, callback) {
 			this.store = store;
 		}
 		if (typeof config != 'undefined') {
-			this.store.configure(config, callback);
-			return true;
+			return this.store.configure(config, callback || defaultCallback);
 		}
 	} catch (e) {
-		if (typeof callback != 'undefined') {
-			callback(e, this);
-			return false;
-		} else {
-			throw e;
-		}
+		return (callback || defaultCallback)(e, this.store);
 	}
-	callback(undefined, this);
-	return true;
+	return (callback || function(){return true;})(undefined, this);
 };
 
 function replaceParams(string, replacements) {
