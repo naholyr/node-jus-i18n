@@ -121,10 +121,13 @@ function getTranslation(i18n, msg, locale, catalogue, context) {
 		translation = translation(context);
 	} else if (typeof translation == 'object') {
 		// {context: translation, "": defaultTranslation}
-		translation = translation[context || ""];
-	} else if (typeof translation == 'string' && typeof context != 'undefined') {
-		// No translation found for generic key, try prefixing key with context
-		translation = getTranslation(i18n, context+":"+msg, locale, catalogue, undefined);
+		translation = translation[context || ""] || translation[""];
+	} else if (typeof context != 'undefined') {
+		// Context requested, and translation not found, or default string translation found
+		var context_translation = getTranslation(i18n, context+":"+msg, locale, catalogue, undefined);
+		if (typeof context_translation != 'undefined') {
+			translation = context_translation;
+		}
 	}
 	return translation;
 }
