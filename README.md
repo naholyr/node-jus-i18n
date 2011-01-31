@@ -4,28 +4,30 @@ Usage
 Default usage
 -------------
 
-    // Load module:
-    var i18n = require('/path/to/i18n');
-    // Optional: set default locale
-    i18n.defaultLocale = 'fr';
-    // Optional: add prefix and suffix around untranslated strings (default = '[T]' and '[/T]'
-    i18n.debug();
-    // Mandatory: load translation data
-    i18n.load(
-      catalogue, // Catalogue to load, undefined if you want to load default catalogue
-      locales,   // array of locales to load, undefined if want to load all available locales
-      function(errors, loadedLocales, store) { // Callback
-        // errors = hash of exceptions thrown by each erroneous locale, or undefined if no error
-        //          any global error will be stored in errors.ALL
-        // loadedLocales = array of successfully loaded locales
-        // store = store module
-      }
-    );
-    // Go translate :)
-    console.log(i18n.translate('Chicken')); // "Poulet"
-    console.log(i18n.translate('Chicken', 'it')); // "Pollo"
-    console.log(i18n.translate('Chicken {name}', {name: "KFC"})); // "Poulet KFC"
-    console.log(i18n.translate('Chicken {name}', {name: "KFC"}, 'it')); // "Pollo KFC"
+```javascript
+// Load module:
+var i18n = require('/path/to/i18n');
+// Optional: set default locale
+i18n.defaultLocale = 'fr';
+// Optional: add prefix and suffix around untranslated strings (default = '[T]' and '[/T]'
+i18n.debug();
+// Mandatory: load translation data
+i18n.load(
+  catalogue, // Catalogue to load, undefined if you want to load default catalogue
+  locales,   // array of locales to load, undefined if want to load all available locales
+  function(errors, loadedLocales, store) { // Callback
+    // errors = hash of exceptions thrown by each erroneous locale, or undefined if no error
+    //          any global error will be stored in errors.ALL
+    // loadedLocales = array of successfully loaded locales
+    // store = store module
+  }
+);
+// Go translate :)
+console.log(i18n.translate('Chicken')); // "Poulet"
+console.log(i18n.translate('Chicken', 'it')); // "Pollo"
+console.log(i18n.translate('Chicken {name}', {name: "KFC"})); // "Poulet KFC"
+console.log(i18n.translate('Chicken {name}', {name: "KFC"}, 'it')); // "Pollo KFC"
+```
 
 Integration with Express.js
 ---------------------------
