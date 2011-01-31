@@ -113,6 +113,22 @@ function replaceParams(string, replacements) {
 	return string;
 }
 
+function getTranslation(i18n, msg, locale, catalogue, context) {
+	var translation = i18n.store.get(msg, locale, catalogue, i18n);
+	// Supported results
+	if (typeof translation == 'function') {
+		// callback(context)
+		translation = translation(context);
+	} else if (typeof translation == 'object') {
+		// {context: translation, "": defaultTranslation}
+		translation = translation[context || ""];
+	} else if (typeof translation == 'string' && typeof context != 'undefined') {
+		// No translation found for generic key, try prefixing key with context
+		translation = getTranslation(i18n, context+":"+msg, locale, catalogue, undefined);
+	}
+	return translation;
+}
+
 exports.translate = function translate(msg, params, locale, catalogue) {
 	if (typeof params == 'string') {
 		if (typeof locale != 'undefined') {
@@ -122,15 +138,7 @@ exports.translate = function translate(msg, params, locale, catalogue) {
 		params = undefined;
 	}
 	// Find translation
-	var translation;
-	// Search with context
-	if (params && typeof params.context != 'undefined') {
-		translation = this.store.get(params.context+":"+msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
-	}
-	// No context, or no translation for this context, search with no context
-	if (typeof translation == 'undefined') {
-		var translation = this.store.get(msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, this);
-	}
+	var translation = getTranslation(this, msg, locale || this.defaultLocale, catalogue || this.defaultCatalogue, params && params.context);
 	var translated = typeof translation != 'undefined';
 	// No translation found, just keep original message
 	if (!translated) {

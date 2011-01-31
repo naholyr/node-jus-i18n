@@ -65,8 +65,8 @@ A whole catalogue in a single file:
     // Module name: "./i18n-data/%catalogue%"
     // ./i18n-data/messages.js
     module.exports = {
-      "fr": { "Chicken": "Poulet", "Chicken %name%": "Poulet %name%" },
-      "it": { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" },
+      "fr": { "Chicken": "Poulet", "Chicken {name}": "Poulet {name}" },
+      "it": { "Chicken": "Pollo", "Chicken {name}": "Pollo {name}" },
     };
     // will be loaded with i18n.load('messages');
 
@@ -83,10 +83,25 @@ Note that you can customize the path to i18n-data modules:
 
     i18n.i18nDataModuleName.__default__ = process.cwd() + "/i18n-data";
 
+This method is the most flexible, faster than other file storage, and therefore ideal to embed your translations in your application.
+Nevertheless, there is an important drawback using module storage: not the same file will be loaded, depending on the way you call "i18n.load(...)".
+The best way to store your messages using module storage, to keep full compatibility with any "load(...)" parameters, is to declare your catalogue, that will include all locales:
+
+    // ./i18n-data/messages/index.js
+    module.exports = {
+      "fr": require('./fr'),
+      "it": require('./it')
+    };
+    // ./i18n-data/messages/fr.js
+    module.exports = { "Chicken": "Poulet", "Chicken %name%": "Poulet %name%" };
+    // ./i18n-data/messages/it.js
+    module.exports = { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" };
+	// i18n.load('messages') and i18n.load('messages', ['fr', 'it']) will both work
+
 Store: file
 -----------
 
-Soon available (format: ini).
+
 
 Store: db
 ---------
@@ -200,6 +215,7 @@ Write your own store
 --------------------
 
 You must write a module that will expose at least two self-explanatory methods:
+
 * load(catalogue, locales, i18n, callback)
   * catalogue and i18n will always be provided by i18n module.
   * if no locale is provided, you're expected to enable all available locales.
@@ -243,7 +259,6 @@ Stupid example (will always translate "js", and only this one, into "rox"):
       // This time, it's synchronous, your implementation, your choice
       callback(undefined, i18n, this);
     }
-      
 
 TODO
 ====
@@ -253,9 +268,10 @@ TODO
 * Better documentation.
 * If provided a "file" store: Ability to merge data from more than one folder.
 * Ability to use more than one store at same time.
-* Better support for locales "lang_COUNTRY" (loads messages for locales "lang" and "lang-country")
+* Better support for locales "lang_COUNTRY" (loads messages for locales "lang" and "lang-country").
 * All these things I didn't think about yet.
 
+---
 
 * Done: <del>Plural forms, including ranges and expressions recognition</del>.
 * Done: <del>Context like gender (original idea from dialect)</del>.

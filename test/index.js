@@ -22,9 +22,14 @@ i18n.setStore('module', {paths: {__default__: __dirname + '/i18n-data'}}, functi
 		for (var n=0; n<6; n++) {
 			console.log(i18n.plural('You have {n} messages', n, 'fr'));
 		}
+		i18n.defaultLocale = 'fr';
 		console.log(i18n.translate('Hello, {name}', {name:'Jones', context:'male'}));    // Bonjour, monsieur Jones
 		console.log(i18n.translate('Hello, {name}', {name:'Jones', context:'female'}));  // Bonjour, mademoiselle Jones
 		console.log(i18n.translate('Hello, {name}', {name:'Jones', context:'unknown'})); // Bonjour, Jones
+		i18n.defaultLocale = 'en';
+		console.log(i18n.translate('Hello, {name}', {name:'Jones', context:'male'}));    // Hello, mister Jones
+		console.log(i18n.translate('Hello, {name}', {name:'Jones', context:'female'}));  // Hello, miss Jones
+		console.log(i18n.translate('Hello, {name}', {name:'Jones', context:'unknown'})); // Hello, Jones
 	});
 });
 

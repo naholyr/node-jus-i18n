@@ -7,6 +7,10 @@ exports.fr = {
 };
 
 exports.en = {
-	'x': 'x (in English)'
+	'x': 'x (in English)',
+	'Hello, {name}': {
+		"": "Hello, {name}",
+		"female": "Hello, miss {name}",
+		"male": "Hello, mister {name}"
+	}
 };
-
