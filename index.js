@@ -89,6 +89,11 @@ exports.defaultPluralReplace = 'n';
 exports.availableLocales = undefined; // any locale available in store
 
 exports.setStore = function(store, config, callback) {
+	if (typeof config == 'function') {
+		var tmp = callback;
+		callback = config;
+		config = tmp;
+	}
 	try {
 		if (typeof store == 'string') {
 			this.store = require('./stores/' + store);

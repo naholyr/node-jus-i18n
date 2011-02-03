@@ -3,7 +3,7 @@ var i18n = require(__dirname + '/..');
 i18n.defaultLocale = 'fr';
 i18n.debug();
 
-i18n.setStore('module', {paths: {__default__: __dirname + '/i18n-data'}}, function(err) {
+i18n.setStore('file', function(err) {
 	if (err) {
 		throw err;
 	}
