@@ -1,57 +1,44 @@
+const readdir = require('../lib/readdir');
+const async = require('../lib/async');
+const fs = require('fs');
+const path = require('path');
 
 var options = {
-	"paths": [ process.cwd() + "/i18n-data" ],
-	"encoding": "utf8"
-},
-data = {},
-FS = require("fs"),
-Path = require("path");
+	"paths": [ path.join(process.cwd(), 'i18n-data') ],
+	"encoding": 'utf8',
+	"pattern": /([a-z0-9\-_]+)\.([a-z\-_]+)\.[a-z]+$/i,
+	"patternIndexCatalogue": 1,
+	"patternIndexLocale": 2
+};
+var data = {};
 
-function readdirs(paths, callback) {
-	setTimeout(function() {
-		var files = [], error = undefined;
-		paths.forEach(function(path) {
-			if (error) return;
-			try {
-				var path_files = FS.readdirSync(path);
-				path_files.forEach(function(file) {
-					files.push(Path.join(path, file));
-				});
-			} catch (e) {
-				if (e instanceof Error && e.errno == 2) { // Not found
-					// Ignore error
-				} else {
-					error = e;
+function listCatalogueFiles(catalogue, callback) {
+	readdir.glob(options.paths, options.pattern, function(err, files, matches) {
+		if (err) callback(err);
+		else {
+			var catalogueFiles = [];
+			var catalogueMatches = [];
+			files.forEach(function(file, i) {
+				if (matches[i][options.patternIndexCatalogue] == catalogue) {
+					catalogueFiles.push(file);
+					catalogueMatches.push(matches[i]);
 				}
-			}
-		});
-		callback(error, files);
-	}, 0);
-}
-
-function glob(paths, re, callback) {
-	if (!(paths instanceof Array)) {
-		paths = [paths];
-	}
-	readdirs(paths, function(err, files) {
-		if (err) {
-			callback(err);
-		} else {
-			callback(undefined, files.filter(function(file) {
-				return re.test(file);
-			}));
+			});
+			callback(err, catalogueFiles, catalogueMatches);
 		}
 	});
 }
 
-function loadFiles(files) {
-	return files.map(loadFile);
+function loadFiles(files, callback) {
+	var locales = [];
+	async.map(files, loadFile, function(file, locale) { locales.push(locale) }, function(err) { callback(err, locales) });
 }
 
-function loadFile(file) {
-	var parts = Path.basename(file).split(/\./);
-	if (parts.length >= 3) {
-		var catalogue = parts[0], locale = parts[1];
+function loadFile(file, callback) {
+	var m = file.match(options.pattern);
+	if (m) {
+		var catalogue = m[options.patternIndexCatalogue];
+		var locale = m[options.patternIndexLocale];
 		if (typeof data[catalogue] == 'undefined') {
 			data[catalogue] = {};
 		}
@@ -59,31 +46,26 @@ function loadFile(file) {
 			data[catalogue][locale] = {};
 		}
 		translations = data[catalogue][locale];
-		var content = FS.readFileSync(file, options.encoding);
-		content.split(/[\r\n]+/).forEach(function(line) {
-			var trans = line.split("="), source = trans.shift(), target = trans.join("=");
-			if (target) {
-				source = source.replace(/^\s*(["']?)(.*?)\1\s*$/, '$2');
-				target = target.replace(/^\s*(["']?)(.*?)\1\s*$/, '$2');
-				translations[source] = target;
-			}
+		fs.readFile(file, options.encoding, function(err, content) {
+			if (!err) content.split(/[\r\n]+/).forEach(function(line) {
+				var trans = line.split("="), source = trans.shift(), target = trans.join("=");
+				if (target) {
+					source = source.replace(/^\s*(["']?)(.*?)\1\s*$/, '$2');
+					target = target.replace(/^\s*(["']?)(.*?)\1\s*$/, '$2');
+					translations[source] = target;
+				}
+			});
+			callback(err, locale);
 		});
-		return locale;
 	}
 }
 
 exports.load = function load(catalogue, locales, i18n, callback) {
+	var self = this;
 	if (typeof locales == 'undefined') {
 		// No locales: load by catalogue
-		glob(options.paths, new RegExp("\/"+catalogue.toLowerCase()+"\.[a-z\-_]+\.[a-z0-9\-_]+$", "i"), function(err, files) {
-			var locales, error;
-			try {
-				locales = loadFiles(files);
-			} catch (e) {
-				error = e;
-			}
-			callback(error, locales, this);
-console.log(data);
+		listCatalogueFiles(catalogue, function(err, files) {
+			loadFiles(files, function(err, locales) { callback(err, locales, self) });
 		});
 	} else {
 		// Load specified locales
@@ -100,20 +82,44 @@ exports.get = function get(key, locale, catalogue) {
 	return ((data[catalogue] || {})[locale] || {})[key];
 };
 
-exports.configure = function configure(options, callback) {
+exports.configure = function configure(newOptions, callback) {
 	// Too dumb to be configured
 	if (typeof options != 'object') {
 		return callback(new Error('Invalid options'), this);
+	}
+	for (var option in newOptions) {
+		options[option] = newOptions[option];
 	}
 	return callback(undefined, this);
 };
 
 exports.locales = function locales(prefix, catalogue, callback) {
-	// Too dumb...
-	return callback(new Error('Too dumb to know what locales I can load'), undefined, this);
+	function hasPrefix(locale) {
+		return locale && (locale.substring(0, prefix.length) == prefix);
+	}
+	listCatalogueFiles(catalogue, function(err, files, matches) {
+		if (err) callback(err);
+		else {
+			var allLocales = [];
+			files.forEach(function(file, i) {
+				var locale = matches[i][options.patternIndexLocale];
+				if (hasPrefix(locale) && allLocales.indexOf(locale) == -1) allLocales.push(locale);
+			});
+			callback(err, allLocales);
+		}
+	});
 };
 
 exports.catalogues = function catalogues(callback) {
-	// Too dumb...
-	return callback(new Error('Too dumb to know what catalogues I can load'), undefined, this);
+	readdir.glob(options.paths, options.pattern, function(err, files, matches) {
+		if (err) callback(err);
+		else {
+			var catalogues = [];
+			matches.forEach(function(match) {
+				var catalogue = match[options.patternIndexCatalogue];
+				if (catalogues.indexOf(catalogue) == -1) catalogues.push(catalogue);
+			});
+			callback(err, catalogues);
+		}
+	});
 };
