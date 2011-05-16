@@ -4,53 +4,57 @@ Usage
 Default usage
 -------------
 
-    // Load module:
-    var i18n = require('/path/to/i18n');
-    // Optional: set default locale
-    i18n.defaultLocale = 'fr';
-    // Optional: add prefix and suffix around untranslated strings (default = '[T]' and '[/T]'
-    i18n.debug();
-    // Mandatory: load translation data
-    i18n.load(
-      catalogue, // Catalogue to load, undefined if you want to load default catalogue
-      locales,   // array of locales to load, undefined if want to load all available locales
-      function(errors, loadedLocales, store) { // Callback
-        // errors = hash of exceptions thrown by each erroneous locale, or undefined if no error
-        //          any global error will be stored in errors.ALL
-        // loadedLocales = array of successfully loaded locales
-        // store = store module
-      }
-    );
-    // Go translate :)
-    console.log(i18n.translate('Chicken')); // "Poulet"
-    console.log(i18n.translate('Chicken', 'it')); // "Pollo"
-    console.log(i18n.translate('Chicken {name}', {name: "KFC"})); // "Poulet KFC"
-    console.log(i18n.translate('Chicken {name}', {name: "KFC"}, 'it')); // "Pollo KFC"
+```javascript
+// Load module:
+var i18n = require('/path/to/i18n');
+// Optional: set default locale
+i18n.defaultLocale = 'fr';
+// Optional: add prefix and suffix around untranslated strings (default = '[T]' and '[/T]'
+i18n.debug();
+// Mandatory: load translation data
+i18n.load(
+  catalogue, // Catalogue to load, undefined if you want to load default catalogue
+  locales,   // array of locales to load, undefined if want to load all available locales
+  function(errors, loadedLocales, store) { // Callback
+    // errors = hash of exceptions thrown by each erroneous locale, or undefined if no error
+    //          any global error will be stored in errors.ALL
+    // loadedLocales = array of successfully loaded locales
+    // store = store module
+  }
+);
+// Go translate :)
+console.log(i18n.translate('Chicken')); // "Poulet"
+console.log(i18n.translate('Chicken', 'it')); // "Pollo"
+console.log(i18n.translate('Chicken {name}', {name: "KFC"})); // "Poulet KFC"
+console.log(i18n.translate('Chicken {name}', {name: "KFC"}, 'it')); // "Pollo KFC"
+```
 
 Integration with Express.js
 ---------------------------
 
-    // ... app initialized ...
-    // Load module:
-    var i18n = require('/path/to/i18n');
-    // Optional: configure default locale, debug mode, etc.
-    // Then configure application:
-    app.configure(function() {
-      i18n.enableForApp(app, { // options (all are optional, you can pass {} or undefined
-        "locale": "en",          // default locale
-        "catalogue": "messages", // catalogue to load
-        "locales": undefined,    // locales to load
-      }, function(err) { // called when i18n has loaded messages
-        ...
-      });
-    });
-    // Your "req" object is augmented:
-    req.i18n.translate(...)
-    req.locales() // returns the list of user's accept-language, ordered by preference
-    req.locale() // returns current user's chosen locale, stored in session if available
-    // Your templates gain new helpers:
-    ...<%= _('Hello, {name}', {name: userName}) %>...
-    ...<%= plural('You have {n} messages', nbMessages) %>...
+```javascript
+// ... app initialized ...
+// Load module:
+var i18n = require('/path/to/i18n');
+// Optional: configure default locale, debug mode, etc.
+// Then configure application:
+app.configure(function() {
+  i18n.enableForApp(app, { // options (all are optional, you can pass {} or undefined
+    "locale": "en",          // default locale
+    "catalogue": "messages", // catalogue to load
+    "locales": undefined,    // locales to load
+  }, function(err) { // called when i18n has loaded messages
+    ...
+  });
+});
+// Your "req" object is augmented:
+req.i18n.translate(...)
+req.locales() // returns the list of user's accept-language, ordered by preference
+req.locale() // returns current user's chosen locale, stored in session if available
+// Your templates gain new helpers:
+...<%= _('Hello, {name}', {name: userName}) %>...
+...<%= plural('You have {n} messages', nbMessages) %>...
+```
 
 Store your messages
 ===================
@@ -62,41 +66,49 @@ Store: module
 
 A whole catalogue in a single file:
 
-    // Module name: "./i18n-data/%catalogue%"
-    // ./i18n-data/messages.js
-    module.exports = {
-      "fr": { "Chicken": "Poulet", "Chicken {name}": "Poulet {name}" },
-      "it": { "Chicken": "Pollo", "Chicken {name}": "Pollo {name}" },
-    };
-    // will be loaded with i18n.load('messages');
+```javascript
+// Module name: "./i18n-data/%catalogue%"
+// ./i18n-data/messages.js
+module.exports = {
+  "fr": { "Chicken": "Poulet", "Chicken {name}": "Poulet {name}" },
+  "it": { "Chicken": "Pollo", "Chicken {name}": "Pollo {name}" },
+};
+// will be loaded with i18n.load('messages');
+```
 
 Or split by locale:
 
-    // Module name: "./i18n-data/%catalogue%/%locale%"
-    // ./i18n-data/messages/fr.js
-    module.exports = { "Chicken": "Poulet", "Chicken %name%": "Poulet %name%" };
-    // ./i18n-data/messages/it.js
-    module.exports = { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" };
-    // will be loaded with i18n.load('messages', ['fr', 'it']);
+```javascript
+// Module name: "./i18n-data/%catalogue%/%locale%"
+// ./i18n-data/messages/fr.js
+module.exports = { "Chicken": "Poulet", "Chicken %name%": "Poulet %name%" };
+// ./i18n-data/messages/it.js
+module.exports = { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" };
+// will be loaded with i18n.load('messages', ['fr', 'it']);
+```
 
 Note that you can customize the path to i18n-data modules:
 
-    i18n.i18nDataModuleName.__default__ = process.cwd() + "/i18n-data";
+```javascript
+i18n.i18nDataModuleName.__default__ = process.cwd() + "/i18n-data";
+```
 
 This method is the most flexible, faster than other file storage, and therefore ideal to embed your translations in your application.
 Nevertheless, there is an important drawback using module storage: not the same file will be loaded, depending on the way you call "i18n.load(...)".
 The best way to store your messages using module storage, to keep full compatibility with any "load(...)" parameters, is to declare your catalogue, that will include all locales:
 
-    // ./i18n-data/messages/index.js
-    module.exports = {
-      "fr": require('./fr'),
-      "it": require('./it')
-    };
-    // ./i18n-data/messages/fr.js
-    module.exports = { "Chicken": "Poulet", "Chicken %name%": "Poulet %name%" };
-    // ./i18n-data/messages/it.js
-    module.exports = { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" };
-	// i18n.load('messages') and i18n.load('messages', ['fr', 'it']) will both work
+```javascript
+// ./i18n-data/messages/index.js
+module.exports = {
+  "fr": require('./fr'),
+  "it": require('./it')
+};
+// ./i18n-data/messages/fr.js
+module.exports = { "Chicken": "Poulet", "Chicken %name%": "Poulet %name%" };
+// ./i18n-data/messages/it.js
+module.exports = { "Chicken": "Pollo", "Chicken %name%": "Pollo %name%" };
+i18n.load('messages') and i18n.load('messages', ['fr', 'it']) will both work
+```
 
 In this storage engine, methods to list available locales will not respond.
 
@@ -138,8 +150,6 @@ Mixing plural forms and contexts can be confusing, the best practice is not to u
 
 Store: file
 -----------
-
-*Not Implemented Yet*
 
 Filename: i18n-data/messages.{lang}[.txt]
 
@@ -191,6 +201,18 @@ Multiline format (define default translation, then one translation per context, 
 
 If you need to use a single pipe as default translation, this will trigger plural forms (and then a syntax error) unless you quote it or escape it. 
 
+Store: gettext
+--------------
+
+The hierarchy is fully similar with the file storage, except that files are expected to end with ".po".
+
+This store uses Javascript implementation of Gettext, and interprets directly ".po" files. No need to compile.
+
+The PO format won't be described here, use it as expected :) Some notes though:
+* Generic plural forms handler implemented by jus-i18n is not used here, we directly use gettext's one.
+* Plural forms API in jus-i18n expects only one parameter "msg". If your `msgid` and `msgid_plural` values are not the same in your PO file, then you'll simply have to provide an array `[msgid, msgid_plural]`.
+* Contexts are supported by gettext, but jus-i18n context handling will still be used. This is expected to change.
+
 Store: db
 ---------
 
@@ -198,6 +220,8 @@ Soon available (redis, mongodb, mysql...).
 
 Plural forms
 ============
+
+TODO documentation.
 
 This is the most important feature to come. Still in development though.
 
