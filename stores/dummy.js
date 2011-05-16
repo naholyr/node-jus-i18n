@@ -37,3 +37,11 @@ exports.catalogues = function catalogues(callback) {
 	// Too dumb...
 	return callback(new Error('Too dumb to know what catalogues I can load'), undefined, this);
 };
+
+/*
+ * Plural forms
+ *
+ * exports.plural = function(msg, number, locale, catalogue) {
+ *	// If I support plural forms, this method will be called instead of the generic one
+ * }
+ */

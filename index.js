@@ -166,8 +166,8 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 	if (this.debugInfo) {
 		this.pluralHandler.debug = true;
 	}
-	// Translate ?
-	if (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined') {
+	// Translate (only if all information provided, and no plural in store) ?
+	if (!this.store.plural && (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined')) {
 		msg = this.translate(msg, params, locale, catalogue);
 	}
 	// "number" can be a number (we'll replace "n" in this case), or an object like '{"count": 33}'
@@ -187,7 +187,13 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 		throw new Error('plural() expects 2nd parameter to be a number.');
 	}
 	// Handle plural form
-	msg = this.pluralHandler(msg, number);
+	if (this.store.plural) {
+		// Skip generic plural forms handler, use the one embedded in store
+		msg = this.store.plural(msg, number, locale || this.defaultLocale, catalogue || this.defaultCatalogue);
+	} else {
+		// Use generic plural forms handler, msg must have the required format
+		msg = this.pluralHandler(msg, number);
+	}
 	// Replace in result
 	var replacements = {};
 	replacements[paramName] = String(number);
