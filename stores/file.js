@@ -5,7 +5,7 @@ const path = require('path');
 
 var options = {
 	"paths": [ path.join(process.cwd(), 'i18n-data') ],
-	"encoding": 'utf8',
+	"encoding": 'UTF-8',
 	"pattern": /([a-z0-9\-_]+)\.([a-z\-_]+)\.[a-z]+$/i,
 	"patternIndexCatalogue": 1,
 	"patternIndexLocale": 2
@@ -62,20 +62,15 @@ function loadFile(file, callback) {
 
 exports.load = function load(catalogue, locales, i18n, callback) {
 	var self = this;
-	if (typeof locales == 'undefined') {
-		// No locales: load by catalogue
-		listCatalogueFiles(catalogue, function(err, files) {
+	listCatalogueFiles(catalogue, function(err, files, matches) {
+		if (err) callback(err, [], self);
+		else {
+			if (typeof locales != 'undefined') {
+				files = files.filter(function(f, i) { locales.indexOf(matches[i][options.patternIndexLocale]) != -1 });
+			}
 			loadFiles(files, function(err, locales) { callback(err, locales, self) });
-		});
-	} else {
-		// Load specified locales
-		var errors = {};
-		locales.forEach(function(locale) {
-			errors[locale] = new Error('Too dumb to load locale ' + locale);
-		});
-		errors.ALL = new Error('Too dumb to load anything');
-		callback(errors, [], this);
-	}
+		}
+	});
 };
 
 exports.get = function get(key, locale, catalogue) {
@@ -83,7 +78,6 @@ exports.get = function get(key, locale, catalogue) {
 };
 
 exports.configure = function configure(newOptions, callback) {
-	// Too dumb to be configured
 	if (typeof options != 'object') {
 		return callback(new Error('Invalid options'), this);
 	}
