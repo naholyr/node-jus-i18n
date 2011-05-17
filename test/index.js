@@ -1,2 +1,2 @@
 require('./test-file');
-require('./test-gettext');
+//require('./test-gettext');
