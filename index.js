@@ -59,9 +59,9 @@ exports.enableForApp = function enableForApp(app, options, callback) {
 
 		// Add "req.locale([locale])" based on session
 		http.IncomingMessage.prototype.locale = function(newValue) {
-			var current = req.session[module.exports.localeSessKey];
+			var current = this.session[module.exports.localeSessKey];
 			if (typeof newValue != 'undefined') {
-				req.session[module.exports.localeSessKey] = newValue;
+				this.session[module.exports.localeSessKey] = newValue;
 			}
 			if (typeof current == 'undefined' && typeof defaultLocale != 'undefined') {
 				current = defaultLocale;
@@ -71,8 +71,8 @@ exports.enableForApp = function enableForApp(app, options, callback) {
 
 		// Add "req.i18n.translate(...)" and "req.i18n.plural(...)"
 		http.IncomingMessage.prototype.i18n = {
-			"translate": this.translate,
-			"plural":    this.plural
+			"translate": exports.translate.bind(exports),
+			"plural":    exports.plural.bind(exports)
 		};
 
 		return callback(undefined, i18n);
