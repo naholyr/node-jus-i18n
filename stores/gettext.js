@@ -21,7 +21,7 @@ function loadFile(file, callback) {
 		if (typeof data[catalogue][locale] == 'undefined') {
 			data[catalogue][locale] = {};
 		}
-		translations = data[catalogue][locale];
+		var translations = data[catalogue][locale];
 		fs.readFile(file, options.encoding, function(err, content) {
 			if (!err) content.split(/[\r\n]+/).forEach(function(line) {
 				var trans = line.split("="), source = trans.shift(), target = trans.join("=");
