@@ -61,7 +61,7 @@ req.locale() // returns current user's chosen locale, stored in session if avail
 Store your messages
 ===================
 
-There is only one messages store currently supported is "module", which means you store your messages as a Node.js module.
+There are multiple message stores currently supported, details for which are provided below.
 
 Store: module
 -------------
@@ -211,6 +211,7 @@ The hierarchy is fully similar with the file storage, except that files are expe
 This store uses Javascript implementation of Gettext, and interprets directly ".po" files. No need to compile.
 
 The PO format won't be described here, use it as expected :) Some notes though:
+
 * Generic plural forms handler implemented by jus-i18n is not used here, we directly use gettext's one.
 * Plural forms API in jus-i18n expects only one parameter "msg". If your `msgid` and `msgid_plural` values are not the same in your PO file, then you'll simply have to provide an array `[msgid, msgid_plural]`.
 * Contexts are supported by gettext, but jus-i18n context handling will still be used. This is expected to change.
