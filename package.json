@@ -2,7 +2,7 @@
   "author": "Nicolas Chambrier <naholyr@gmail.com> (http://naholyr.fr)",
   "name": "jus-i18n",
   "description": "Real I18N implementation, with a true support for plural forms, and many storage engines. Works best with Express or Jus Framework",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage": "https://github.com/naholyr/node-i18n",
   "repository": {
     "type": "git",

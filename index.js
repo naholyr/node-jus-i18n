@@ -167,14 +167,15 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 		this.pluralHandler.debug = true;
 	}
 
-	if (typeof params == 'string' && typeof locale == 'undefined'){
+	if (typeof params === 'string' && typeof locale === 'undefined') {
 		locale = params;
 		params = {};
 	}
 
-	if (!params){
+	if (!params) {
 		params = {};
 	}
+
 	// Translate (only if all information provided, and no plural in store) ?
 	if (!this.store.plural && (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined')) {
 		msg = this.translate(msg, params, locale, catalogue);
