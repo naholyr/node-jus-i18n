@@ -166,6 +166,15 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 	if (this.debugInfo) {
 		this.pluralHandler.debug = true;
 	}
+
+	if (typeof params == 'string' && typeof locale == 'undefined'){
+		locale = params;
+		params = {};
+	}
+
+	if (!params){
+		params = {};
+	}
 	// Translate (only if all information provided, and no plural in store) ?
 	if (!this.store.plural && (typeof params != 'undefined' || typeof locale != 'undefined' || typeof catalogue != 'undefined')) {
 		msg = this.translate(msg, params, locale, catalogue);
@@ -195,7 +204,7 @@ exports.plural = function plural(msg, number, params, locale, catalogue) {
 		msg = this.pluralHandler(msg, number);
 	}
 	// Replace in result
-	var replacements = {};
+	var replacements = params;
 	replacements[paramName] = String(number);
 	return replaceParams(msg, replacements);
 };
